@@ -1,0 +1,37 @@
+services:
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - '8086:8086'
+    volumes:
+      - ./data/db:/var/lib/influxdb
+    env_file:
+      - .env 
+  chronograf:
+    image: chronograf:latest
+    container_name: chronograf
+    ports:
+      - '127.0.0.1:8888:8888'
+#    volumes:
+#      - data/chronograf:/var/lib/chronograf
+    depends_on:
+      - influxdb
+    env_file:
+      - .env 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+      - ./grafana-provisioning/:/etc/grafana/provisioning
+    depends_on:
+      - influxdb
+    env_file:
+      - .env 
+#volumes:
+#  influxdb-storage:
+#  chronograf-storage:
+#  grafana-storage:

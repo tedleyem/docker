@@ -1,0 +1,59 @@
+services:
+  app:
+    image: snipe/snipe-it:${SNIPE_VERSION}
+    container_name: snipe
+    restart: unless-stopped
+    volumes:
+      - snipe-storage:/var/lib/snipeit
+    ports:
+      - "8000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    env_file:
+      - .env
+
+  db:
+    image: mariadb:11.5.2
+    container_name: snipe-db
+    restart: unless-stopped
+    environment:
+      PUID: ${SNIPE_PUID}
+      PGID: ${SNIPE_PGID}
+      APP_KEY: ${SNIPE_APP_KEY}
+      APP_URL: ${SNIPE_APP_URL}
+      APP_DEBUG: ${SNIPE_APP_DEBUG} #optional
+      APP_ENV: ${SNIPE_APP_ENV} #optional
+      APP_FORCE_TLS: ${SNIPE_APP_FORCE_TLS} #optional
+      APP_LOCALE: ${SNIPE_APP_LOCALE} #optional
+      TZ: ${DB_TZ}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_PORT_3306_TCP_ADDR: ${DB_PORT_3306_TCP_ADDR}
+      MYSQL_PORT_3306_TCP_PORT: ${DB_PORT_3306_TCP_PORT}
+      MAIL_PORT_587_TCP_ADDR: ${MAIL_PORT_587_TCP_ADDR} #optional
+      MAIL_PORT_587_TCP_PORT: ${MAIL_PORT_587_TCP_PORT} #optional
+      MAIL_ENV_FROM_ADDR: ${MAIL_ENV_FROM_ADDR} #optional
+      MAIL_ENV_FROM_NAME: ${MAIL_ENV_FROM_NAME} #optional
+      MAIL_ENV_ENCRYPTION: ${MAIL_ENV_ENCRYPTION} #optional
+      MAIL_ENV_USERNAME: ${MAIL_ENV_USERNAME}  #optional
+      MAIL_ENV_PASSWORD: ${MAIL_ENV_PASSWORD} #optional
+      # Snipe variables
+
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      # https://mariadb.com/kb/en/using-healthcheck-sh/#compose-file-example
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 1s
+      retries: 5
+
+volumes:
+  snipe-storage:
+    driver: "local"
+  db-data:
+    driver: "local"

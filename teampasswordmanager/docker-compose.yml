@@ -1,0 +1,52 @@
+services:
+  teampasswordmanager:
+    container_name: tpm
+    image: teampasswordmanager/teampasswordmanager:latest
+    platform: linux/x86_64 # for mac development
+    depends_on:
+      - mysql
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - tpm_volume:/var/www/html
+    networks:
+     - tpm_network
+    environment:
+      - TPM_SERVER_TIMEZONE=${TPM_SERVER_TIMEZONE}
+      - TPM_PHP_TIMEZONE=${TPM_PHP_TIMEZONE}
+      - TPM_ENCRYPT_DB_CONFIG=${TPM_ENCRYPT_DB_CONFIG}
+      - TPM_CONFIG_HOSTNAME=${TPM_CONFIG_HOSTNAME}
+      - TPM_CONFIG_PORT=${TPM_CONFIG_PORT}
+      - TPM_CONFIG_USERNAME=${TPM_CONFIG_USERNAME}
+      - TPM_CONFIG_PASSWORD=${TPM_CONFIG_PASSWORD}
+      - TPM_CONFIG_DATABASE=${TPM_CONFIG_DATABASE}
+      - TPM_UPGRADE=${TPM_UPGRADE}
+
+  mysql:
+    image: mysql:5.7
+    container_name: tpm-db
+    restart: always
+    platform: linux/x86_64 # for mac development
+    ports:
+      - "13306:3306"
+    volumes:
+      - tpm_mysqldata:/var/lib/mysql
+    networks:
+     - tpm_network
+    environment:
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+
+networks:
+  tpm_network:
+    driver: "bridge"
+
+volumes:
+  tpm_mysqldata:
+    driver: "local"
+  tpm_volume:
+    driver: "local"

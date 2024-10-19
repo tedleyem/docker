@@ -1,0 +1,80 @@
+services:
+  jira:
+    image: atlassian/jira-core:10.0.0-RC-jdk17
+    restart: always
+    expose:
+      - 8080
+    environment:
+      - VIRTUAL_HOST=${BASE_FQDN}
+      - VIRTUAL_PATH=/jira
+      - VIRTUAL_PORT=8080
+      - CERT_NAME=default
+      - ATL_PROXY_NAME=${BASE_FQDN}
+      - ATL_PROXY_PORT=443
+      - ATL_TOMCAT_SCHEME=https
+      - ATL_TOMCAT_SECURE=false
+      - ATL_TOMCAT_CONTEXTPATH=jira
+      - ATL_DB_DRIVER=com.mysql.cj.jdbc.Driver
+      - ATL_DB_SCHEMA_NAME=jiradb
+      - ATL_JDBC_USER=db_user
+      - ATL_JDBC_PASSWORD=${MYSQL_PASSWORD}
+      - JVM_MINIMUM_MEMORY=2048m
+      - JVM_MAXIMUM_MEMORY=4096m
+    links:
+      - database
+    volumes:
+      - jira-data:/var/atlassian/jira
+  confluence:
+    image: atlassian/confluence:8.9.5-ubuntu-jdk17
+    expose:
+      - 8090
+    environment:
+      - VIRTUAL_HOST=${BASE_FQDN}
+      - VIRTUAL_PATH=/confluence
+      - VIRTUAL_PORT=8090
+      - CERT_NAME=default
+      - ATL_PROXY_NAME=${BASE_FQDN}
+      - ATL_PROXY_PORT=443
+      - ATL_TOMCAT_SCHEME=https
+      - ATL_TOMCAT_SECURE=false
+      - ATL_TOMCAT_CONTEXTPATH=confluence
+    restart: always
+    links:
+      - database
+    volumes:
+      - confluence-data:/var/atlassian/confluence
+  bitbucket:
+    image: atlassian/bitbucket:8-ubuntu-jdk17
+    restart: always
+    environment:
+     - SERVER_PROXY_NAME=bitbucket.internal
+     - SERVER_PROXY_PORT=80
+     - SERVER_SCHEME=http
+    links:
+      - database
+    volumes:
+      - bitbucket-data:/var/atlassian/application-data/bitbucket
+  database:
+    image: postgres:9.4
+    restart: always
+    volumes:
+      - database-data:/var/lib/postgresql/data
+  nginx:
+    image: nginx
+    restart: always
+    ports:
+      - "80:80"
+    links:
+      - jira
+      - confluence
+      - bitbucket
+    volumes:
+    - ./:/src
+    command: ./src/scripts/run_nginx.sh
+    environment:
+    - DOMAIN
+volumes:
+  jira-data:
+  confluence-data:
+  bitbucket-data:
+  database-data:
